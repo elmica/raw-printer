@@ -35,7 +35,7 @@ mod tests {
 /// 
 /// ```
 #[cfg(target_os = "linux")]
-pub fn write_to_device(printer: &str, payload: &str) -> Result<usize, std::io::Error> {
+pub fn write_to_device(printer: &str, payload: &mut [u8]) -> Result<usize, std::io::Error> {
     use std::fs::OpenOptions;
     use std::io::Write;
 
@@ -43,7 +43,7 @@ pub fn write_to_device(printer: &str, payload: &str) -> Result<usize, std::io::E
 
     match device_path {
         Ok(mut device) => {
-            let bytes_written = device.write(payload.as_bytes())?;
+            let bytes_written = device.write(payload)?;
             Ok(bytes_written)
         }
         Err(e) => Err(std::io::Error::new(std::io::ErrorKind::Other, e)),
@@ -51,7 +51,7 @@ pub fn write_to_device(printer: &str, payload: &str) -> Result<usize, std::io::E
 }
 
 #[cfg(target_os = "windows")]
-pub fn write_to_device(printer: &str, payload: &str) -> Result<usize, std::io::Error> {
+pub fn write_to_device(printer: &str, payload: &mut [u8]) -> Result<usize, std::io::Error> {
     use std::ffi::CString;
     use std::ptr;
     use windows::Win32::Foundation::HANDLE;
@@ -95,7 +95,7 @@ pub fn write_to_device(printer: &str, payload: &str) -> Result<usize, std::io::E
                 return Err(std::io::Error::from(windows::core::Error::from_win32()));
             }
 
-            let buffer = payload.as_bytes();
+            let buffer = payload;
 
             let mut bytes_written: u32 = 0;
             if !WritePrinter(
